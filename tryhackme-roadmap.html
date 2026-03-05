@@ -1,0 +1,1582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TryHackMe — Offensive Security Roadmap</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=IBM+Plex+Mono:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #060a0f;
+    --panel: #0b1118;
+    --border: #1a2535;
+    --green: #00ff9d;
+    --green-dim: #00cc7d;
+    --green-glow: rgba(0,255,157,0.15);
+    --red: #ff3c5a;
+    --red-dim: #cc2244;
+    --orange: #ff8c00;
+    --orange-dim: rgba(255,140,0,0.15);
+    --cyan: #00cfff;
+    --cyan-dim: rgba(0,207,255,0.12);
+    --yellow: #ffe066;
+    --purple: #bf5fff;
+    --purple-dim: rgba(191,95,255,0.12);
+    --text: #c8d8e8;
+    --text-dim: #5a7080;
+    --text-bright: #e8f4ff;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Scanline overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.03) 2px,
+      rgba(0,0,0,0.03) 4px
+    );
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  /* Grid background */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,255,157,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,157,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrapper { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; padding: 0 24px 80px; }
+
+  /* ── HEADER ── */
+  header {
+    padding: 60px 0 40px;
+    text-align: center;
+    position: relative;
+  }
+
+  .header-badge {
+    display: inline-block;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--green);
+    border: 1px solid var(--green);
+    padding: 4px 16px;
+    margin-bottom: 24px;
+    animation: pulse-border 3s ease-in-out infinite;
+  }
+
+  @keyframes pulse-border {
+    0%, 100% { box-shadow: 0 0 8px var(--green-glow), inset 0 0 8px var(--green-glow); }
+    50% { box-shadow: 0 0 20px var(--green-glow), inset 0 0 12px var(--green-glow); }
+  }
+
+  h1 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(28px, 5vw, 56px);
+    font-weight: 900;
+    letter-spacing: -1px;
+    line-height: 1.1;
+    color: var(--text-bright);
+    margin-bottom: 8px;
+  }
+
+  h1 span.accent { color: var(--green); }
+
+  .subtitle {
+    font-size: 13px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    margin-top: 16px;
+  }
+
+  .terminal-prompt {
+    display: inline-block;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    color: var(--green-dim);
+    margin-top: 20px;
+    opacity: 0.7;
+  }
+
+  .terminal-prompt::before { content: '$ '; color: var(--green); }
+
+  /* ── LEGEND ── */
+  .legend {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: 32px 0 48px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    color: var(--text-dim);
+  }
+
+  .legend-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* ── PHASE SECTIONS ── */
+  .phase {
+    margin-bottom: 48px;
+    position: relative;
+    animation: fadein 0.5s ease both;
+  }
+
+  @keyframes fadein {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .phase:nth-child(1) { animation-delay: 0.1s; }
+  .phase:nth-child(2) { animation-delay: 0.2s; }
+  .phase:nth-child(3) { animation-delay: 0.3s; }
+  .phase:nth-child(4) { animation-delay: 0.4s; }
+  .phase:nth-child(5) { animation-delay: 0.5s; }
+  .phase:nth-child(6) { animation-delay: 0.6s; }
+  .phase:nth-child(7) { animation-delay: 0.7s; }
+
+  .phase-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .phase-number {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--bg);
+    padding: 4px 10px;
+    letter-spacing: 2px;
+    flex-shrink: 0;
+  }
+
+  .phase-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--text-bright);
+  }
+
+  .phase-desc {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-left: auto;
+    letter-spacing: 1px;
+    text-align: right;
+    max-width: 300px;
+  }
+
+  /* ── CARDS GRID ── */
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    padding: 20px;
+    position: relative;
+    cursor: default;
+    transition: all 0.25s ease;
+    overflow: hidden;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+  }
+
+  .card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(255,255,255,0.15);
+  }
+
+  .card:hover::before { opacity: 1; }
+
+  /* Color variants */
+  .card.green::before { background: var(--green); }
+  .card.green:hover { box-shadow: 0 8px 32px rgba(0,255,157,0.1); }
+  .card.green .card-tag { color: var(--green); border-color: var(--green); background: var(--green-glow); }
+  .card.green .card-icon { color: var(--green); }
+
+  .card.red::before { background: var(--red); }
+  .card.red:hover { box-shadow: 0 8px 32px rgba(255,60,90,0.1); }
+  .card.red .card-tag { color: var(--red); border-color: var(--red); background: rgba(255,60,90,0.1); }
+  .card.red .card-icon { color: var(--red); }
+
+  .card.orange::before { background: var(--orange); }
+  .card.orange:hover { box-shadow: 0 8px 32px rgba(255,140,0,0.1); }
+  .card.orange .card-tag { color: var(--orange); border-color: var(--orange); background: var(--orange-dim); }
+  .card.orange .card-icon { color: var(--orange); }
+
+  .card.cyan::before { background: var(--cyan); }
+  .card.cyan:hover { box-shadow: 0 8px 32px rgba(0,207,255,0.1); }
+  .card.cyan .card-tag { color: var(--cyan); border-color: var(--cyan); background: var(--cyan-dim); }
+  .card.cyan .card-icon { color: var(--cyan); }
+
+  .card.purple::before { background: var(--purple); }
+  .card.purple:hover { box-shadow: 0 8px 32px rgba(191,95,255,0.1); }
+  .card.purple .card-tag { color: var(--purple); border-color: var(--purple); background: var(--purple-dim); }
+  .card.purple .card-icon { color: var(--purple); }
+
+  .card.yellow::before { background: var(--yellow); }
+  .card.yellow:hover { box-shadow: 0 8px 32px rgba(255,224,102,0.1); }
+  .card.yellow .card-tag { color: var(--yellow); border-color: var(--yellow); background: rgba(255,224,102,0.08); }
+  .card.yellow .card-icon { color: var(--yellow); }
+
+  .card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    gap: 8px;
+  }
+
+  .card-icon {
+    font-size: 22px;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+
+  .card-tag {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    border: 1px solid;
+    padding: 2px 8px;
+    flex-shrink: 0;
+    text-transform: uppercase;
+  }
+
+  .card-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-bright);
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+    line-height: 1.3;
+  }
+
+  .card-room {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-bottom: 12px;
+    letter-spacing: 1px;
+  }
+
+  .card-room::before { content: 'THM: '; opacity: 0.6; }
+
+  .topics {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .topics li {
+    font-size: 11px;
+    color: var(--text-dim);
+    padding-left: 16px;
+    position: relative;
+    line-height: 1.4;
+  }
+
+  .topics li::before {
+    content: '▸';
+    position: absolute;
+    left: 0;
+    color: var(--text-dim);
+    opacity: 0.5;
+  }
+
+  .card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+
+  .difficulty {
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    color: var(--text-dim);
+  }
+
+  .dots {
+    display: flex;
+    gap: 4px;
+  }
+
+  .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--border);
+  }
+
+  .dot.filled { background: currentColor; }
+
+  .xp {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+  }
+
+  /* ── CONNECTOR LINE ── */
+  .connector {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 28px 0;
+    padding: 0 8px;
+  }
+
+  .connector-line {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+  }
+
+  .connector-text {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 3px;
+    white-space: nowrap;
+  }
+
+  /* ── MILESTONE BANNER ── */
+  .milestone {
+    border: 1px solid;
+    padding: 16px 24px;
+    margin: 40px 0;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .milestone::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0.05;
+  }
+
+  .milestone.green { border-color: var(--green); }
+  .milestone.green::before { background: var(--green); }
+  .milestone.green .milestone-icon { color: var(--green); }
+  .milestone.green .milestone-label { color: var(--green); }
+
+  .milestone.red { border-color: var(--red); }
+  .milestone.red::before { background: var(--red); }
+  .milestone.red .milestone-icon { color: var(--red); }
+  .milestone.red .milestone-label { color: var(--red); }
+
+  .milestone-icon { font-size: 28px; flex-shrink: 0; }
+  .milestone-label {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    margin-bottom: 4px;
+  }
+  .milestone-text { font-size: 12px; color: var(--text-dim); }
+
+  /* ── SKILL TREE ── */
+  .skill-tree {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    padding: 28px;
+    margin: 40px 0;
+  }
+
+  .skill-tree-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 12px;
+    letter-spacing: 3px;
+    color: var(--green);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .skill-tree-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .skill-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 12px;
+    align-items: center;
+  }
+
+  .skill-node {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    padding: 6px 14px;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    position: relative;
+    cursor: default;
+    transition: all 0.2s ease;
+  }
+
+  .skill-node:hover {
+    border-color: var(--green);
+    color: var(--green);
+    background: var(--green-glow);
+  }
+
+  .skill-arrow {
+    color: var(--text-dim);
+    font-size: 14px;
+    opacity: 0.4;
+  }
+
+  /* ── TOOLS SECTION ── */
+  .tools-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 10px;
+    margin: 16px 0;
+  }
+
+  .tool-chip {
+    border: 1px solid var(--border);
+    padding: 10px 14px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.2s ease;
+    cursor: default;
+  }
+
+  .tool-chip:hover {
+    border-color: var(--cyan);
+    color: var(--cyan);
+    background: var(--cyan-dim);
+  }
+
+  .tool-chip .tool-cat {
+    font-size: 9px;
+    color: var(--text-dim);
+    opacity: 0.5;
+    display: block;
+    margin-top: 2px;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 32px 0 0;
+    margin-top: 60px;
+    text-align: center;
+  }
+
+  .footer-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 20px;
+    margin-bottom: 32px;
+    text-align: left;
+  }
+
+  .footer-col h4 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--green);
+    margin-bottom: 12px;
+  }
+
+  .footer-col p {
+    font-size: 11px;
+    color: var(--text-dim);
+    line-height: 1.8;
+  }
+
+  .footer-note {
+    font-size: 10px;
+    color: var(--text-dim);
+    opacity: 0.4;
+    letter-spacing: 2px;
+    padding-bottom: 32px;
+  }
+
+  @media (max-width: 600px) {
+    .cards { grid-template-columns: 1fr; }
+    .phase-desc { display: none; }
+    h1 { font-size: 28px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <!-- HEADER -->
+  <header>
+    <div class="header-badge">OFFENSIVE SECURITY LEARNING PATH</div>
+    <h1>TryHackMe<br><span class="accent">Attacker Roadmap</span></h1>
+    <p class="subtitle">FUNDAMENTALS → LABS → REAL-WORLD EXPLOITATION</p>
+    <div class="terminal-prompt">tryhackme --path offensive --level beginner-to-advanced</div>
+  </header>
+
+  <!-- LEGEND -->
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#00ff9d"></div>BEGINNER</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#00cfff"></div>EASY</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#ff8c00"></div>MEDIUM</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#ff3c5a"></div>HARD</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#bf5fff"></div>ADVANCED</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#ffe066"></div>LAB / CTF</div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ -->
+  <!-- PHASE 1: FOUNDATIONS -->
+  <!-- ══════════════════════════════════════════ -->
+  <div class="phase">
+    <div class="phase-header">
+      <div class="phase-number" style="background:var(--green)">PHASE 01</div>
+      <div class="phase-title">FOUNDATIONS & LINUX BASICS</div>
+      <div class="phase-desc">Build your OS, networking & CLI base</div>
+    </div>
+    <div class="cards">
+
+      <div class="card green">
+        <div class="card-top">
+          <div class="card-icon">🐧</div>
+          <div class="card-tag">ESSENTIAL</div>
+        </div>
+        <div class="card-title">Linux Fundamentals (Parts 1–3)</div>
+        <div class="card-room">linuxfundamentals</div>
+        <ul class="topics">
+          <li>File system navigation & permissions</li>
+          <li>Users, groups, sudo escalation</li>
+          <li>Processes, cron, services</li>
+          <li>Bash scripting basics</li>
+          <li>Searching with grep, find, awk</li>
+        </ul>
+        <div class="card-footer">
+          <div>
+            <div class="difficulty">BEGINNER</div>
+            <div class="dots" style="color:var(--green)">
+              <div class="dot filled"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+            </div>
+          </div>
+          <div class="xp">+2,400 XP</div>
+        </div>
+      </div>
+
+      <div class="card green">
+        <div class="card-top">
+          <div class="card-icon">🌐</div>
+          <div class="card-tag">ESSENTIAL</div>
+        </div>
+        <div class="card-title">Networking Fundamentals</div>
+        <div class="card-room">whatisnetworking / introtonetworking</div>
+        <ul class="topics">
+          <li>OSI & TCP/IP model layers</li>
+          <li>IP addressing, subnetting, CIDR</li>
+          <li>TCP/UDP, ports & protocols</li>
+          <li>DNS, DHCP, ARP, ICMP</li>
+          <li>Wireshark packet analysis</li>
+        </ul>
+        <div class="card-footer">
+          <div>
+            <div class="difficulty">BEGINNER</div>
+            <div class="dots" style="color:var(--green)">
+              <div class="dot filled"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+            </div>
+          </div>
+          <div class="xp">+1,800 XP</div>
+        </div>
+      </div>
+
+      <div class="card green">
+        <div class="card-top">
+          <div class="card-icon">💻</div>
+          <div class="card-tag">ESSENTIAL</div>
+        </div>
+        <div class="card-title">How the Web Works</div>
+        <div class="card-room">howwebworks</div>
+        <ul class="topics">
+          <li>HTTP/HTTPS request & response cycle</li>
+          <li>DNS resolution deep dive</li>
+          <li>Cookies, sessions, headers</li>
+          <li>HTML, JavaScript basics</li>
+          <li>Browser developer tools</li>
+        </ul>
+        <div class="card-footer">
+          <div>
+            <div class="difficulty">BEGINNER</div>
+            <div class="dots" style="color:var(--green)">
+              <div class="dot filled"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+            </div>
+          </div>
+          <div class="xp">+1,600 XP</div>
+        </div>
+      </div>
+
+      <div class="card green">
+        <div class="card-top">
+          <div class="card-icon">🔐</div>
+          <div class="card-tag">ESSENTIAL</div>
+        </div>
+        <div class="card-title">Cryptography & Hashing</div>
+        <div class="card-room">cryptographyformaldummies / hashingcrypto101</div>
+        <ul class="topics">
+          <li>Symmetric & asymmetric encryption</li>
+          <li>MD5, SHA family hashing</li>
+          <li>Base64, ROT13, XOR</li>
+          <li>Public key infrastructure (PKI)</li>
+          <li>SSL/TLS handshake mechanics</li>
+        </ul>
+        <div class="card-footer">
+          <div>
+            <div class="difficulty">BEGINNER</div>
+            <div class="dots" style="color:var(--green)">
+              <div class="dot filled"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+            </div>
+          </div>
+          <div class="xp">+1,400 XP</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="connector">
+    <div class="connector-line"></div>
+    <div class="connector-text">▼ PROGRESS TO RECONNAISSANCE ▼</div>
+    <div class="connector-line"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ -->
+  <!-- PHASE 2: RECONNAISSANCE -->
+  <!-- ══════════════════════════════════════════ -->
+  <div class="phase">
+    <div class="phase-header">
+      <div class="phase-number" style="background:var(--cyan)">PHASE 02</div>
+      <div class="phase-title">RECONNAISSANCE & ENUMERATION</div>
+      <div class="phase-desc">Passive + active intel gathering</div>
+    </div>
+    <div class="cards">
+
+      <div class="card cyan">
+        <div class="card-top">
+          <div class="card-icon">🔍</div>
+          <div class="card-tag">ACTIVE</div>
+        </div>
+        <div class="card-title">Passive Reconnaissance</div>
+        <div class="card-room">passiverecon</div>
+        <ul class="topics">
+          <li>WHOIS, DNS lookups, reverse DNS</li>
+          <li>Shodan, Censys, ZoomEye OSINT</li>
+          <li>Google dorking & search operators</li>
+          <li>theHarvester & Maltego basics</li>
+          <li>Certificate transparency logs</li>
+        </ul>
+        <div class="card-footer">
+          <div>
+            <div class="difficulty">EASY</div>
+            <div class="dots" style="color:var(--cyan)">
+              <div class="dot filled"></div><div class="dot filled"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+            </div>
+          </div>
+          <div class="xp">+1,200 XP</div>
+        </div>
+      </div>
+
+      <div class="card cyan">
+        <div class="card-top">
+          <div class="card-icon">📡</div>
+          <div class="card-tag">SCANNING</div>
+        </div>
+        <div class="card-title">Nmap — Active Scanning</div>
+        <div class="card-room">furthernmap</div>
+        <ul class="topics">
+          <li>TCP SYN, connect, UDP scans</li>
+          <li>OS fingerprinting (-O flag)</li>
+          <li>Version detection (-sV)</li>
+          <li>NSE scripting engine (--script)</li>
+          <li>Firewall evasion techniques</li>
+        </ul>
+        <div class="card-footer">
+          <div>
+            <div class="difficulty">EASY</div>
+            <div class="dots" style="color:var(--cyan)">
+              <div class="dot filled"></div><div class="dot filled"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+            </div>
+          </div>
+          <div class="xp">+1,500 XP</div>
+        </div>
+      </div>
+
+      <div class="card cyan">
+        <div class="card-top">
+          <div class="card-icon">🌍</div>
+          <div class="card-tag">WEB ENUM</div>
+        </div>
+        <div class="card-title">Web Enumeration</div>
+        <div class="card-room">contentenumerationbug</div>
+        <ul class="topics">
+          <li>Directory brute-forcing with Gobuster</li>
+          <li>ffuf — fast web fuzzer</li>
+          <li>Virtual host enumeration</li>
+          <li>Subdomain discovery (amass, subfinder)</li>
+          <li>Spider & crawl techniques</li>
+        </ul>
+        <div class="card-footer">
+          <div>
+            <div class="difficulty">EASY</div>
+            <div class="dots" style="color:var(--cyan)">
+              <div class="dot filled"></div><div class="dot filled"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+            </div>
+          </div>
+          <div class="xp">+1,300 XP</div>
+        </div>
+      </div>
+
+      <div class="card cyan">
+        <div class="card-top">
+          <div class="card-icon">🔎</div>
+          <div class="card-tag">SMB/LDAP</div>
+        </div>
+        <div class="card-title">Network Service Enumeration</div>
+        <div class="card-room">enumerationpe</div>
+        <ul class="topics">
+          <li>SMB enumeration (enum4linux, smbclient)</li>
+          <li>SNMP, NFS, FTP enumeration</li>
+          <li>SMTP user enumeration</li>
+          <li>LDAP, RPC, NetBIOS probing</li>
+          <li>Banner grabbing with netcat</li>
+        </ul>
+        <div class="card-footer">
+          <div>
+            <div class="difficulty">EASY</div>
+            <div class="dots" style="color:var(--cyan)">
+              <div class="dot filled"></div><div class="dot filled"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+            </div>
+          </div>
+          <div class="xp">+1,400 XP</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="milestone green">
+    <div class="milestone-icon">🎯</div>
+    <div>
+      <div class="milestone-label">CHECKPOINT — FIRST LAB</div>
+      <div class="milestone-text">Complete the "Pre-Security" learning path on TryHackMe before advancing. You should now be able to enumerate a target independently.</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ -->
+  <!-- PHASE 3: EXPLOITATION FUNDAMENTALS -->
+  <!-- ══════════════════════════════════════════ -->
+  <div class="phase">
+    <div class="phase-header">
+      <div class="phase-number" style="background:var(--orange)">PHASE 03</div>
+      <div class="phase-title">EXPLOITATION FUNDAMENTALS</div>
+      <div class="phase-desc">Initial access techniques & vectors</div>
+    </div>
+    <div class="cards">
+
+      <div class="card orange">
+        <div class="card-top">
+          <div class="card-icon">⚔️</div>
+          <div class="card-tag">METASPLOIT</div>
+        </div>
+        <div class="card-title">Metasploit Framework</div>
+        <div class="card-room">metasploitintro</div>
+        <ul class="topics">
+          <li>msfconsole navigation & modules</li>
+          <li>Auxiliary, exploits, payloads</li>
+          <li>Staged vs stageless payloads</li>
+          <li>Meterpreter shell basics</li>
+          <li>Post-exploitation modules</li>
+        </ul>
+        <div class="card-footer">
+          <div>
+            <div class="difficulty">MEDIUM</div>
+            <div class="dots" style="color:var(--orange)">
+              <div class="dot filled"></div><div class="dot filled"></div><div class="dot filled"></div><div class="dot"></div><div class="dot"></div>
+            </div>
+          </div>
+          <div class="xp">+2,100 XP</div>
+        </div>
+      </div>
+
+      <div class="card orange">
+        <div class="card-top">
+          <div class="card-icon">🔑</div>
+          <div class="card-tag">AUTH ATTACKS</div>
+        </div>
+        <div class="card-title">Password Attacks</div>
+        <div class="card-room">passwordattacks</div>
+        <ul class="topics">
+          <li>Brute-force vs credential stuffing</li>
+          <li>Hydra — online password attacks</li>
+          <li>Hashcat & John the Ripper offline cracking</li>
+          <li>Wordlist generation (crunch, cewl)</li>
+          <li>Rule-based attacks & mask attacks</li>
+        </ul>
+        <div class="card-footer">
+          <div>
+            <div class="difficulty">MEDIUM</div>
+            <div class="dots" style="color:var(--orange)">
+              <div class="dot filled"></div><div class="dot filled"></div><div class="dot filled"></div><div class="dot"></div><div class="dot"></div>
+            </div>
+          </div>
+          <div class="xp">+1,900 XP</div>
+        </div>
+      </div>
+
+      <div class="card orange">
+        <div class="card-top">
+          <div class="card-icon">🐚</div>
+          <div class="card-tag">SHELLS</div>
+        </div>
+        <div class="card-title">Shells & Reverse Shells</div>
+        <div class="card-room">introtoshells</div>
+        <ul class="topics">
+          <li>Bind vs reverse shell concepts</li>
+          <li>Netcat listeners & shell spawning</li>
+          <li>Shell stabilization techniques</li>
+          <li>Web shells (PHP, ASPX, JSP)</li>
+          <li>Shell in Python, Bash, PowerShell</li>
+        </ul>
+        <div class="card-footer">
+          <div>
+            <div class="difficulty">MEDIUM</div>
+            <div class="dots" style="color:var(--orange)">
+              <div class="dot filled"></div><div class="dot filled"></div><div class="dot filled"></div><div class="dot"></div><div class="dot"></div>
+            </div>
+          </div>
+          <div class="xp">+1,700 XP</div>
+        </div>
+      </div>
+
+      <div class="card orange">
+        <div class="card-top">
+          <div class="card-icon">🔓</div>
+          <div class="card-tag">VULN EXPLOIT</div>
+        </div>
+        <div class="card-title">Vulnerability Exploitation</div>
+        <div class="card-room">exploitingavulnerabilityv2</div>
+        <ul class="topics">
+          <li>CVE research & PoC usage</li>
+          <li>ExploitDB & searchsploit</li>
+          <li>Manual exploit modification</li>
+          <li>Exploit reliability & staging</li>
+          <li>Avoiding AV detection basics</li>
+        </ul>
+        <div class="card-footer">
+          <div>
+            <div class="difficulty">MEDIUM</div>
+            <div class="dots" style="color:var(--orange)">
+              <div class="dot filled"></div><div class="dot filled"></div><div class="dot filled"></div><div class="dot"></div><div class="dot"></div>
+            </div>
+          </div>
+          <div class="xp">+1,800 XP</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="connector">
+    <div class="connector-line"></div>
+    <div class="connector-text">▼ EXPANDING ATTACK SURFACE ▼</div>
+    <div class="connector-line"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ -->
+  <!-- PHASE 4: WEB APPLICATION ATTACKS -->
+  <!-- ══════════════════════════════════════════ -->
+  <div class="phase">
+    <div class="phase-header">
+      <div class="phase-number" style="background:var(--red)">PHASE 04</div>
+      <div class="phase-title">WEB APPLICATION ATTACKS</div>
+      <div class="phase-desc">OWASP Top 10 & beyond</div>
+    </div>
+    <div class="cards">
+
+      <div class="card red">
+        <div class="card-top">
+          <div class="card-icon">💉</div>
+          <div class="card-tag">INJECTION</div>
+        </div>
+        <div class="card-title">SQL Injection (SQLi)</div>
+        <div class="card-room">sqlilab</div>
+        <ul class="topics">
+          <li>In-band: Union & Error-based SQLi</li>
+          <li>Blind Boolean & Time-based SQLi</li>
+          <li>sqlmap automation & tamper scripts</li>
+          <li>Authentication bypass via SQLi</li>
+          <li>Reading/writing files from DB</li>
+        </ul>
+        <div class="card-footer">
+          <div>
+            <div class="difficulty">MEDIUM</div>
+            <div class="dots" style="color:var(--red)">
+              <div class="dot filled"></div><div class="dot filled"></div><div class="dot filled"></div><div class="dot"></div><div class="dot"></div>
+            </div>
+          </div>
+          <div class="xp">+2,200 XP</div>
+        </div>
+      </div>
+
+      <div class="card red">
+        <div class="card-top">
+          <div class="card-icon">📜</div>
+          <div class="card-tag">CLIENT SIDE</div>
+        </div>
+        <div class="card-title">Cross-Site Scripting (XSS)</div>
+        <div class="card-room">xssgi</div>
+        <ul class="topics">
+          <li>Reflected, Stored & DOM-based XSS</li>
+          <li>Cookie theft & session hijacking</li>
+          <li>Keyloggers & phishing via XSS</li>
+          <li>CSP bypass techniques</li>
+          <li>BeEF browser exploitation framework</li>
+        </ul>
+        <div class="card-footer">
+          <div>
+            <div class="difficulty">MEDIUM</div>
+            <div class="dots" style="color:var(--red)">
+              <div class="dot filled"></div><div class="dot filled"></div><div class="dot filled"></div><div class="dot"></div><div class="dot"></div>
+            </div>
+          </div>
+          <div class="xp">+2,000 XP</div>
+        </div>
+      </div>
+
+      <div class="card red">
+        <div class="card-top">
+          <div class="card-icon">📁</div>
+          <div class="card-tag">FILE ATTACKS</div>
+        </div>
+        <div class="card-title">File Inclusion & Upload Bugs</div>
+        <div class="card-room">fileinc / uploadvulns</div>
+        <ul class="topics">
+          <li>LFI — Local File Inclusion exploitation</li>
+          <li>RFI — Remote File Inclusion</li>
+          <li>Path traversal (../../etc/passwd)</li>
+          <li>Log poisoning for RCE</li>
+          <li>Bypassing upload filters (magic bytes)</li>
+        </ul>
+        <div class="card-footer">
+          <div>
+            <div class="difficulty">MEDIUM</div>
+            <div class="dots" style="color:var(--red)">
+              <div class="dot filled"></div><div class="dot filled"></div><div class="dot filled"></div><div class="dot"></div><div class="dot"></div>
+            </div>
+          </div>
+          <div class="xp">+2,100 XP</div>
+        </div>
+      </div>
+
+      <div class="card red">
+        <div class="card-top">
+          <div class="card-icon">🛡️</div>
+          <div class="card-tag">AUTH BYPASS</div>
+        </div>
+        <div class="card-title">IDOR & Auth Bypass</div>
+        <div class="card-room">idor</div>
+        <ul class="topics">
+          <li>Insecure Direct Object Reference (IDOR)</li>
+          <li>Broken Access Control exploitation</li>
+          <li>JWT manipulation & none algorithm</li>
+          <li>OAuth misconfigurations</li>
+          <li>CSRF attack construction</li>
+        </ul>
+        <div class="card-footer">
+          <div>
+            <div class="difficulty">MEDIUM</div>
+            <div class="dots" style="color:var(--red)">
+              <div class="dot filled"></div><div class="dot filled"></div><div class="dot filled"></div><div class="dot"></div><div class="dot"></div>
+            </div>
+          </div>
+          <div class="xp">+1,900 XP</div>
+        </div>
+      </div>
+
+      <div class="card red">
+        <div class="card-top">
+          <div class="card-icon">🔧</div>
+          <div class="card-tag">SSRF/CMD</div>
+        </div>
+        <div class="card-title">SSRF & Command Injection</div>
+        <div class="card-room">ssrfqi / oscommandinjection</div>
+        <ul class="topics">
+          <li>Server-Side Request Forgery (SSRF)</li>
+          <li>Internal metadata endpoint abuse</li>
+          <li>OS command injection chains</li>
+          <li>Blind command injection detection</li>
+          <li>XXE — XML External Entity attacks</li>
+        </ul>
+        <div class="card-footer">
+          <div>
+            <div class="difficulty">HARD</div>
+            <div class="dots" style="color:var(--red)">
+              <div class="dot filled"></div><div class="dot filled"></div><div class="dot filled"></div><div class="dot filled"></div><div class="dot"></div>
+            </div>
+          </div>
+          <div class="xp">+2,400 XP</div>
+        </div>
+      </div>
+
+      <div class="card red">
+        <div class="card-top">
+          <div class="card-icon">🔬</div>
+          <div class="card-tag">BURP SUITE</div>
+        </div>
+        <div class="card-title">Burp Suite Mastery</div>
+        <div class="card-room">burpsuite / burpsuiteintruder</div>
+        <ul class="topics">
+          <li>Proxy intercept & request editing</li>
+          <li>Repeater for manual testing</li>
+          <li>Intruder for brute-forcing</li>
+          <li>Scanner & active crawling</li>
+          <li>Extensions: Turbo Intruder, Auth Analyzer</li>
+        </ul>
+        <div class="card-footer">
+          <div>
+            <div class="difficulty">MEDIUM</div>
+            <div class="dots" style="color:var(--red)">
+              <div class="dot filled"></div><div class="dot filled"></div><div class="dot filled"></div><div class="dot"></div><div class="dot"></div>
+            </div>
+          </div>
+          <div class="xp">+2,600 XP</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="milestone red">
+    <div class="milestone-icon">🚩</div>
+    <div>
+      <div class="milestone-label">CHECKPOINT — OWASP TOP 10 PATH</div>
+      <div class="milestone-text">Complete THM's "OWASP Top 10" room and "Jr Penetration Tester" path. You should now be able to find and exploit common web vulnerabilities.</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ -->
+  <!-- PHASE 5: PRIVILEGE ESCALATION -->
+  <!-- ══════════════════════════════════════════ -->
+  <div class="phase">
+    <div class="phase-header">
+      <div class="phase-number" style="background:var(--purple)">PHASE 05</div>
+      <div class="phase-title">PRIVILEGE ESCALATION</div>
+      <div class="phase-desc">From user → root → SYSTEM</div>
+    </div>
+    <div class="cards">
+
+      <div class="card purple">
+        <div class="card-top">
+          <div class="card-icon">🐧</div>
+          <div class="card-tag">LINUX PRIVESC</div>
+        </div>
+        <div class="card-title">Linux Privilege Escalation</div>
+        <div class="card-room">linprivesc</div>
+        <ul class="topics">
+          <li>SUID/SGID binary exploitation</li>
+          <li>Sudo misconfigurations (sudoers)</li>
+          <li>Cron job hijacking</li>
+          <li>Writable /etc/passwd manipulation</li>
+          <li>Capabilities & weak file permissions</li>
+          <li>linPEAS & LinEnum automated audit</li>
+        </ul>
+        <div class="card-footer">
+          <div>
+            <div class="difficulty">HARD</div>
+            <div class="dots" style="color:var(--purple)">
+              <div class="dot filled"></div><div class="dot filled"></div><div class="dot filled"></div><div class="dot filled"></div><div class="dot"></div>
+            </div>
+          </div>
+          <div class="xp">+3,200 XP</div>
+        </div>
+      </div>
+
+      <div class="card purple">
+        <div class="card-top">
+          <div class="card-icon">🪟</div>
+          <div class="card-tag">WIN PRIVESC</div>
+        </div>
+        <div class="card-title">Windows Privilege Escalation</div>
+        <div class="card-room">windows10privesc</div>
+        <ul class="topics">
+          <li>Unquoted service paths & DLL hijacking</li>
+          <li>AlwaysInstallElevated registry abuse</li>
+          <li>Token impersonation (Potato attacks)</li>
+          <li>SAM & SYSTEM registry credential dump</li>
+          <li>Scheduled tasks & service misconfigs</li>
+          <li>WinPEAS automated enumeration</li>
+        </ul>
+        <div class="card-footer">
+          <div>
+            <div class="difficulty">HARD</div>
+            <div class="dots" style="color:var(--purple)">
+              <div class="dot filled"></div><div class="dot filled"></div><div class="dot filled"></div><div class="dot filled"></div><div class="dot"></div>
+            </div>
+          </div>
+          <div class="xp">+3,400 XP</div>
+        </div>
+      </div>
+
+      <div class="card purple">
+        <div class="card-top">
+          <div class="card-icon">🏠</div>
+          <div class="card-tag">ACTIVE DIR</div>
+        </div>
+        <div class="card-title">Active Directory Attacks</div>
+        <div class="card-room">activedirectorybasics / adenumeration</div>
+        <ul class="topics">
+          <li>Kerberoasting & AS-REP Roasting</li>
+          <li>Pass-the-Hash / Pass-the-Ticket</li>
+          <li>BloodHound attack path mapping</li>
+          <li>DCSync & credential dumping</li>
+          <li>Golden & Silver Ticket attacks</li>
+        </ul>
+        <div class="card-footer">
+          <div>
+            <div class="difficulty">HARD</div>
+            <div class="dots" style="color:var(--purple)">
+              <div class="dot filled"></div><div class="dot filled"></div><div class="dot filled"></div><div class="dot filled"></div><div class="dot"></div>
+            </div>
+          </div>
+          <div class="xp">+4,100 XP</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="connector">
+    <div class="connector-line"></div>
+    <div class="connector-text">▼ POST-EXPLOITATION & PERSISTENCE ▼</div>
+    <div class="connector-line"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ -->
+  <!-- PHASE 6: POST EXPLOITATION -->
+  <!-- ══════════════════════════════════════════ -->
+  <div class="phase">
+    <div class="phase-header">
+      <div class="phase-number" style="background:var(--red-dim)">PHASE 06</div>
+      <div class="phase-title">POST-EXPLOITATION & PIVOTING</div>
+      <div class="phase-desc">Maintain access, move laterally</div>
+    </div>
+    <div class="cards">
+
+      <div class="card red">
+        <div class="card-top">
+          <div class="card-icon">👣</div>
+          <div class="card-tag">PERSISTENCE</div>
+        </div>
+        <div class="card-title">Persistence Techniques</div>
+        <div class="card-room">windowspersistence / linuxpersistence</div>
+        <ul class="topics">
+          <li>Backdoor user creation</li>
+          <li>SSH key injection</li>
+          <li>Startup scripts & registry run keys</li>
+          <li>Web shell persistence</li>
+          <li>Scheduled tasks & cron backdoors</li>
+        </ul>
+        <div class="card-footer">
+          <div>
+            <div class="difficulty">HARD</div>
+            <div class="dots" style="color:var(--red)">
+              <div class="dot filled"></div><div class="dot filled"></div><div class="dot filled"></div><div class="dot filled"></div><div class="dot"></div>
+            </div>
+          </div>
+          <div class="xp">+2,800 XP</div>
+        </div>
+      </div>
+
+      <div class="card orange">
+        <div class="card-top">
+          <div class="card-icon">🔄</div>
+          <div class="card-tag">PIVOTING</div>
+        </div>
+        <div class="card-title">Lateral Movement & Pivoting</div>
+        <div class="card-room">pivoting / tunneling</div>
+        <ul class="topics">
+          <li>SSH tunneling (local & remote forwarding)</li>
+          <li>Chisel, ligolo-ng proxy chains</li>
+          <li>SOCKS proxy & proxychains setup</li>
+          <li>WMI, PsExec lateral movement</li>
+          <li>Network pivoting multi-hop</li>
+        </ul>
+        <div class="card-footer">
+          <div>
+            <div class="difficulty">HARD</div>
+            <div class="dots" style="color:var(--orange)">
+              <div class="dot filled"></div><div class="dot filled"></div><div class="dot filled"></div><div class="dot filled"></div><div class="dot"></div>
+            </div>
+          </div>
+          <div class="xp">+3,000 XP</div>
+        </div>
+      </div>
+
+      <div class="card orange">
+        <div class="card-top">
+          <div class="card-icon">🧹</div>
+          <div class="card-tag">ANTI-FORENSICS</div>
+        </div>
+        <div class="card-title">Covering Tracks</div>
+        <div class="card-room">antisense / evidenceclearing</div>
+        <ul class="topics">
+          <li>Log clearing & tampering</li>
+          <li>Bash history manipulation</li>
+          <li>Timestomping file attributes</li>
+          <li>Living off the Land (LOLBins)</li>
+          <li>AMSI & EDR evasion basics</li>
+        </ul>
+        <div class="card-footer">
+          <div>
+            <div class="difficulty">HARD</div>
+            <div class="dots" style="color:var(--orange)">
+              <div class="dot filled"></div><div class="dot filled"></div><div class="dot filled"></div><div class="dot filled"></div><div class="dot"></div>
+            </div>
+          </div>
+          <div class="xp">+2,500 XP</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ -->
+  <!-- PHASE 7: CTF LABS & MACHINES -->
+  <!-- ══════════════════════════════════════════ -->
+  <div class="phase">
+    <div class="phase-header">
+      <div class="phase-number" style="background:var(--yellow); color:#111">PHASE 07</div>
+      <div class="phase-title">CTF LABS & PRACTICE MACHINES</div>
+      <div class="phase-desc">Ranked by difficulty — start here</div>
+    </div>
+    <div class="cards">
+
+      <div class="card green">
+        <div class="card-top">
+          <div class="card-icon">🟢</div>
+          <div class="card-tag">BEGINNER LAB</div>
+        </div>
+        <div class="card-title">Basic Pentesting</div>
+        <div class="card-room">basicpentestingjt</div>
+        <ul class="topics">
+          <li>SMB enumeration → credential find</li>
+          <li>SSH login & privilege escalation</li>
+          <li>Full chain: recon → root flag</li>
+        </ul>
+        <div class="card-footer">
+          <div>
+            <div class="difficulty">EASY</div>
+            <div class="dots" style="color:var(--green)">
+              <div class="dot filled"></div><div class="dot filled"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+            </div>
+          </div>
+          <div class="xp">+1,800 XP</div>
+        </div>
+      </div>
+
+      <div class="card cyan">
+        <div class="card-top">
+          <div class="card-icon">🔵</div>
+          <div class="card-tag">EASY LAB</div>
+        </div>
+        <div class="card-title">Kenobi</div>
+        <div class="card-room">kenobi</div>
+        <ul class="topics">
+          <li>Samba & ProFTPD enumeration</li>
+          <li>Samba share exploitation</li>
+          <li>SUID binary PrivEsc (/usr/bin/menu)</li>
+        </ul>
+        <div class="card-footer">
+          <div>
+            <div class="difficulty">EASY</div>
+            <div class="dots" style="color:var(--cyan)">
+              <div class="dot filled"></div><div class="dot filled"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+            </div>
+          </div>
+          <div class="xp">+2,100 XP</div>
+        </div>
+      </div>
+
+      <div class="card cyan">
+        <div class="card-top">
+          <div class="card-icon">🔵</div>
+          <div class="card-tag">EASY LAB</div>
+        </div>
+        <div class="card-title">Steel Mountain</div>
+        <div class="card-room">steelmountain</div>
+        <ul class="topics">
+          <li>HFS exploit (CVE-2014-6287)</li>
+          <li>Metasploit & manual exploitation</li>
+          <li>PowerShell PrivEsc scripts</li>
+        </ul>
+        <div class="card-footer">
+          <div>
+            <div class="difficulty">EASY</div>
+            <div class="dots" style="color:var(--cyan)">
+              <div class="dot filled"></div><div class="dot filled"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+            </div>
+          </div>
+          <div class="xp">+2,300 XP</div>
+        </div>
+      </div>
+
+      <div class="card orange">
+        <div class="card-top">
+          <div class="card-icon">🟠</div>
+          <div class="card-tag">MEDIUM LAB</div>
+        </div>
+        <div class="card-title">Skynet</div>
+        <div class="card-room">skynet</div>
+        <ul class="topics">
+          <li>Email OSINT → SMB brute-force</li>
+          <li>SquirrelMail RFI exploitation</li>
+          <li>Cron wildcard injection PrivEsc</li>
+        </ul>
+        <div class="card-footer">
+          <div>
+            <div class="difficulty">MEDIUM</div>
+            <div class="dots" style="color:var(--orange)">
+              <div class="dot filled"></div><div class="dot filled"></div><div class="dot filled"></div><div class="dot"></div><div class="dot"></div>
+            </div>
+          </div>
+          <div class="xp">+2,800 XP</div>
+        </div>
+      </div>
+
+      <div class="card orange">
+        <div class="card-top">
+          <div class="card-icon">🟠</div>
+          <div class="card-tag">MEDIUM LAB</div>
+        </div>
+        <div class="card-title">Relevant</div>
+        <div class="card-room">relevant</div>
+        <ul class="topics">
+          <li>Windows SMB exploit (EternalBlue area)</li>
+          <li>Token impersonation PrivEsc</li>
+          <li>No hints — full black-box approach</li>
+        </ul>
+        <div class="card-footer">
+          <div>
+            <div class="difficulty">MEDIUM</div>
+            <div class="dots" style="color:var(--orange)">
+              <div class="dot filled"></div><div class="dot filled"></div><div class="dot filled"></div><div class="dot"></div><div class="dot"></div>
+            </div>
+          </div>
+          <div class="xp">+3,000 XP</div>
+        </div>
+      </div>
+
+      <div class="card red">
+        <div class="card-top">
+          <div class="card-icon">🔴</div>
+          <div class="card-tag">HARD LAB</div>
+        </div>
+        <div class="card-title">Internal</div>
+        <div class="card-room">internal</div>
+        <ul class="topics">
+          <li>WordPress exploitation (wpscan)</li>
+          <li>Jenkins RCE via Groovy script console</li>
+          <li>Docker escape & SSH key pivot</li>
+        </ul>
+        <div class="card-footer">
+          <div>
+            <div class="difficulty">HARD</div>
+            <div class="dots" style="color:var(--red)">
+              <div class="dot filled"></div><div class="dot filled"></div><div class="dot filled"></div><div class="dot filled"></div><div class="dot"></div>
+            </div>
+          </div>
+          <div class="xp">+3,800 XP</div>
+        </div>
+      </div>
+
+      <div class="card red">
+        <div class="card-top">
+          <div class="card-icon">🔴</div>
+          <div class="card-tag">HARD LAB</div>
+        </div>
+        <div class="card-title">Wreath Network</div>
+        <div class="card-room">wreath</div>
+        <ul class="topics">
+          <li>Multi-machine network pentest</li>
+          <li>Pivoting through 3 hosts</li>
+          <li>AV evasion & C2 concepts</li>
+        </ul>
+        <div class="card-footer">
+          <div>
+            <div class="difficulty">HARD</div>
+            <div class="dots" style="color:var(--red)">
+              <div class="dot filled"></div><div class="dot filled"></div><div class="dot filled"></div><div class="dot filled"></div><div class="dot"></div>
+            </div>
+          </div>
+          <div class="xp">+5,200 XP</div>
+        </div>
+      </div>
+
+      <div class="card purple">
+        <div class="card-top">
+          <div class="card-icon">🟣</div>
+          <div class="card-tag">ADVANCED LAB</div>
+        </div>
+        <div class="card-title">Holo Network</div>
+        <div class="card-room">holo</div>
+        <ul class="topics">
+          <li>Full Active Directory environment</li>
+          <li>Kerberoasting, AD lateral movement</li>
+          <li>Advanced AV evasion & C2 ops</li>
+        </ul>
+        <div class="card-footer">
+          <div>
+            <div class="difficulty">ADVANCED</div>
+            <div class="dots" style="color:var(--purple)">
+              <div class="dot filled"></div><div class="dot filled"></div><div class="dot filled"></div><div class="dot filled"></div><div class="dot filled"></div>
+            </div>
+          </div>
+          <div class="xp">+6,500 XP</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SKILL TREE -->
+  <div class="skill-tree">
+    <div class="skill-tree-title">RECOMMENDED LEARNING PATHS (Official THM)</div>
+    <div class="skill-row">
+      <div class="skill-node">Pre-Security</div>
+      <div class="skill-arrow">→</div>
+      <div class="skill-node">Jr Penetration Tester</div>
+      <div class="skill-arrow">→</div>
+      <div class="skill-node">Offensive Pentesting</div>
+      <div class="skill-arrow">→</div>
+      <div class="skill-node">Red Teaming</div>
+    </div>
+    <div class="skill-row">
+      <div class="skill-node">SOC Level 1</div>
+      <div class="skill-arrow">→</div>
+      <div class="skill-node">CompTIA PenTest+ Path</div>
+      <div class="skill-arrow">→</div>
+      <div class="skill-node">OWASP Top 10</div>
+    </div>
+  </div>
+
+  <!-- TOOLS SECTION -->
+  <div style="margin: 40px 0 20px">
+    <div class="skill-tree-title" style="font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:3px;color:var(--cyan);display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+      ESSENTIAL OFFENSIVE TOOLS
+      <div style="flex:1;height:1px;background:var(--border)"></div>
+    </div>
+    <div class="tools-grid">
+      <div class="tool-chip">🔍 Nmap<span class="tool-cat">PORT SCANNING</span></div>
+      <div class="tool-chip">🌐 Gobuster<span class="tool-cat">WEB ENUM</span></div>
+      <div class="tool-chip">⚔️ Metasploit<span class="tool-cat">EXPLOITATION</span></div>
+      <div class="tool-chip">🔬 Burp Suite<span class="tool-cat">WEB PROXY</span></div>
+      <div class="tool-chip">🔑 Hashcat<span class="tool-cat">HASH CRACKING</span></div>
+      <div class="tool-chip">🔑 John the Ripper<span class="tool-cat">HASH CRACKING</span></div>
+      <div class="tool-chip">💧 Hydra<span class="tool-cat">BRUTE FORCE</span></div>
+      <div class="tool-chip">💉 sqlmap<span class="tool-cat">SQL INJECTION</span></div>
+      <div class="tool-chip">🐚 Netcat<span class="tool-cat">SHELLS</span></div>
+      <div class="tool-chip">🦜 linPEAS/WinPEAS<span class="tool-cat">PRIVESC ENUM</span></div>
+      <div class="tool-chip">🐶 BloodHound<span class="tool-cat">AD MAPPING</span></div>
+      <div class="tool-chip">👁️ Wireshark<span class="tool-cat">PACKET ANALYSIS</span></div>
+      <div class="tool-chip">📡 ffuf<span class="tool-cat">WEB FUZZING</span></div>
+      <div class="tool-chip">🏹 impacket<span class="tool-cat">AD ATTACKS</span></div>
+      <div class="tool-chip">🌲 Evil-WinRM<span class="tool-cat">WIN SHELLS</span></div>
+      <div class="tool-chip">🔄 Chisel<span class="tool-cat">TUNNELING</span></div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-grid">
+      <div class="footer-col">
+        <h4>STUDY ORDER</h4>
+        <p>Phase 1 → 2 → 3 → 4<br>→ 5 → 6 → 7<br>Do labs after each phase</p>
+      </div>
+      <div class="footer-col">
+        <h4>TIME ESTIMATE</h4>
+        <p>Beginner: ~3 months<br>Intermediate: ~6 months<br>Full path: ~12 months</p>
+      </div>
+      <div class="footer-col">
+        <h4>AFTER THM</h4>
+        <p>HackTheBox (HTB)<br>eJPT Certification<br>OSCP / CEH</p>
+      </div>
+      <div class="footer-col">
+        <h4>TIP</h4>
+        <p>Take notes in every room. Use Obsidian or CherryTree for your pentest notebook.</p>
+      </div>
+    </div>
+    <div class="footer-note">TRYHACKME OFFENSIVE SECURITY ROADMAP — FOR EDUCATIONAL PURPOSES ONLY — ALWAYS HACK ETHICALLY</div>
+  </footer>
+
+</div>
+</body>
+</html>
